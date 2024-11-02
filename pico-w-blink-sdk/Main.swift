@@ -33,7 +33,22 @@ struct Main {
             return
         }
         #endif
-        
+
+        l2cap_init()
+        gatt_client_init();
+
+        hci_power_control(HCI_POWER_ON);
+
+        sleep_ms(500)
+
+        let advertisement: LowEnergyAdvertisingData = [0x0B, 0x08, 0x42, 0x6C, 0x75, 0x65, 0x5A, 0x20, 0x35, 0x2E, 0x34, 0x33]
+
+        gap_advertisements_set_params(800, 800, 0, 0, nil, 0x07, 0x00);
+        advertisement.withUnsafePointer {
+            gap_advertisements_set_data(advertisement.length, UnsafeMutablePointer<UInt8>(mutating: $0))
+        }
+        gap_advertisements_enable(1);
+
         while true {
             cyw43.dot()
             cyw43.dot()
@@ -67,160 +82,31 @@ extension CYW43 {
         }
 }
 
-struct CYW43: ~Copyable {
-
-    /// Initialize the CYW43 architecture. 
-    /// 
-    /// [Documentation](https://www.raspberrypi.com/documentation/pico-sdk/networking.html#group_pico_cyw43_arch_1ga7a05bd21f02a0effadbba1e8266b8771)
-    init() throws(PicoError) {
-        let errorCode = cyw43_arch_init()
-        guard errorCode == 0 else {
-            throw PicoError(rawValue: errorCode) ?? .unknown
-        }
-    }
-
-    deinit {
-        cyw43_arch_deinit()
-    }
-
-    subscript (gpio: GPIO) -> Bool {
-        get {
-            cyw43_arch_gpio_get(gpio.rawValue)
-        }
-        nonmutating set {
-            cyw43_arch_gpio_put(gpio.rawValue, newValue)
-        }
-    }
+/// Implement `posix_memalign(3)`, which is required by the Embedded Swift runtime but is
+/// not provided by the Pi Pico SDK.
+@_documentation(visibility: internal)
+@_cdecl("posix_memalign") public func posix_memalign(
+    _ memptr: UnsafeMutablePointer<UnsafeMutableRawPointer?>,
+    _ alignment: Int,
+    _ size: Int
+) -> CInt {
+    guard let allocation = malloc(Int(size + alignment - 1)) else { fatalError() }
+    let misalignment = Int(bitPattern: allocation) % alignment
+    precondition(misalignment == 0)
+    memptr.pointee = allocation
+    return 0
 }
 
-extension CYW43 {
-
-    enum GPIO: UInt32, CaseIterable, Copyable, Sendable {
-
-        case led = 0
-
-        case vsys = 1
-
-        case vbus = 2
+/// Implement `arc4random_buf` which is required by the Embedded Swift runtime for Hashable, Set, Dictionary,
+/// and random-number generating APIs but is not provided by the Pi Pico SDK.
+@_documentation(visibility: internal)
+@_cdecl("arc4random_buf") public func arc4random_buf(buf: UnsafeMutableRawPointer, nbytes: Int) {
+    for i in stride(from: 0, to: nbytes - 1, by: 2) {
+        let randomValue = UInt16(rand() & Int32(UInt16.max))
+        (buf + i).assumingMemoryBound(to: UInt16.self).pointee = randomValue
     }
-}
-
-extension CYW43 {
-
-    struct AccessPoint: ~Copyable {
-
-        /// Enables Wi-Fi AP (Access point) mode.
-        /// 
-        /// This enables the Wi-Fi in Access Point mode such that connections can be made to the device by other Wi-Fi clients.
-        init(
-            ssid: StaticString,
-            password: StaticString, 
-            authentication: WiFiAuthentication = .wpa2AESPSK
-        ) throws(PicoError) {
-            ssid.withUTF8Buffer { ssidBuffer in
-                password.withUTF8Buffer { passwordBuffer in
-                    cyw43_arch_enable_ap_mode(ssidBuffer.baseAddress, passwordBuffer.baseAddress, authentication.rawValue)
-                }
-            }
-        }
-
-        /// Enables Wi-Fi AP (Access point) mode.
-        /// 
-        /// This enables the Wi-Fi in Access Point mode such that connections can be made to the device by other Wi-Fi clients.
-        init(
-            ssid: StaticString
-        ) throws(PicoError) {
-            ssid.withUTF8Buffer { ssidBuffer in
-                cyw43_arch_enable_ap_mode(ssidBuffer.baseAddress, nil, UInt32(CYW43_AUTH_OPEN))
-            }
-        }
-
-        deinit {
-            cyw43_arch_disable_ap_mode()
-        }
+    if nbytes % 2 == 1 {
+        let randomValue = UInt8(rand() & Int32(UInt8.max))
+        (buf + nbytes - 1).assumingMemoryBound(to: UInt8.self).pointee = randomValue
     }
-}
-
-enum WiFiAuthentication: UInt32, Copyable, Sendable {
-    
-    /// WPA authorization using TKIP (Temporal Key Integrity Protocol).
-    case wpaTKIPPSK = 0x00200002
-    
-    /// WPA2 authorization using AES (Advanced Encryption Standard); preferred option.
-    case wpa2AESPSK = 0x00400004
-    
-    /// Mixed WPA/WPA2 authorization for compatibility with both types.
-    case wpa2MixedPSK = 0x00400006
-    
-    /// WPA3 authorization using SAE (Simultaneous Authentication of Equals) with AES.
-    case wpa3SAE_AESPSK = 0x01000004
-    
-    /// Mixed WPA2/WPA3 authorization for compatibility with both WPA2 and WPA3 devices.
-    case wpa3WPA2_AESPSK = 0x01400004
-}
-
-enum PicoError: Int32, Error, Copyable, Sendable {
-
-    /// An unspecified error occurred.
-    case unknown = -1
-    
-    /// The function failed due to timeout.
-    case timeout = -2
-    
-    /// Attempt to read from an empty buffer/FIFO.
-    case noData = -3
-    
-    /// Permission violation (e.g. write to read-only flash partition).
-    case notPermitted = -4
-    
-    /// Argument is outside the range of supported values.
-    case invalidArg = -5
-    
-    /// An I/O error occurred.
-    case io = -6
-    
-    /// The authorization failed due to bad credentials.
-    case badAuth = -7
-    
-    /// The connection failed.
-    case connectFailed = -8
-    
-    /// Dynamic allocation of resources failed.
-    case insufficientResources = -9
-    
-    /// Address argument was out-of-bounds or inaccessible.
-    case invalidAddress = -10
-    
-    /// Address was mis-aligned (usually not on a word boundary).
-    case badAlignment = -11
-    
-    /// Something failed in the past, preventing servicing the current request.
-    case invalidState = -12
-    
-    /// A user-allocated buffer was too small to hold the result.
-    case bufferTooSmall = -13
-    
-    /// The call failed because another function must be called first.
-    case preconditionNotMet = -14
-    
-    /// Cached data was determined to be inconsistent with the actual version.
-    case modifiedData = -15
-    
-    /// A data structure failed to validate.
-    case invalidData = -16
-    
-    /// Attempted to access something that does not exist; search failed.
-    case notFound = -17
-    
-    /// Write is impossible based on previous writes (e.g. attempted to clear an OTP bit).
-    case unsupportedModification = -18
-    
-    /// A required lock is not owned.
-    case lockRequired = -19
-    
-    /// A version mismatch occurred (e.g. running incompatible code).
-    case versionMismatch = -20
-    
-    /// The call could not proceed because required resources were unavailable.
-    case resourceInUse = -21
 }

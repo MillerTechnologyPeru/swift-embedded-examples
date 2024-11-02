@@ -11,5 +11,7 @@
 
 #pragma once
 
+#include "btstack.h"
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
+#include "pico/btstack_cyw43.h"
