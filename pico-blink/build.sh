@@ -10,8 +10,9 @@ REPOROOT=$(git rev-parse --show-toplevel)
 TOOLSROOT=$REPOROOT/Tools
 
 # Setup tools and build flags
-SWIFT_EXEC=${SWIFT_EXEC:-`xcrun -f swift`}
-CLANG=${CLANG:-`xcrun -f clang`}
+SWIFT_TOOLCHAIN=swift-DEVELOPMENT-SNAPSHOT-2024-10-30-a
+SWIFT_EXEC=/Library/Developer/Toolchains/$SWIFT_TOOLCHAIN.xctoolchain/usr/bin/swift
+CLANG=/Library/Developer/Toolchains/$SWIFT_TOOLCHAIN.xctoolchain/usr/bin/clang
 SWIFT_FLAGS="-enable-experimental-feature Embedded -disable-stack-protector"
 CLANG_FLAGS="-D__MACH__ -ffreestanding -mcpu=cortex-m0plus -mthumb"
 LD_FLAGS="-static -Wl,-e,_reset -dead_strip -Wl,-no_zero_fill_sections -Wl,-segalign,4 -Wl,-segaddr,__RESET,0x20000000 -Wl,-segaddr,__VECTORS,0x20000100 -Wl,-seg1addr,0x20000200 -Wl,-pagezero_size,0"
