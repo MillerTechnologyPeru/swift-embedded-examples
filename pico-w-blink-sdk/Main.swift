@@ -21,17 +21,20 @@ struct Main {
             print("Wi-Fi init failed.")
             return
         }
+        defer {
+            cyw43.deinit()
+        }
         let led = UInt32(CYW43_WL_GPIO_LED_PIN)
         let dot = {
-            cyw43.gpio(led, true)
+            cyw43[.led] = true
             sleep_ms(250)
-            cyw43.gpio(led, false)
+            cyw43[.led] = false
             sleep_ms(250)
         }
         let dash = {
-            cyw43.gpio(led, true)
+            cyw43[.led] = true
             sleep_ms(500)
-            cyw43.gpio(led, false)
+            cyw43[.led] = false
             sleep_ms(250)
         }
         while true {
@@ -62,8 +65,29 @@ struct CYW43 {
         }
     }
 
-    func gpio(_ pin: UInt32, _ state: Bool) {
-        cyw43_arch_gpio_put(pin, state)
+    func `deinit`() {
+        cyw43_arch_deinit()
+    }
+
+    subscript (gpio: GPIO) -> Bool {
+        get {
+            cyw43_arch_gpio_get(gpio.rawValue)
+        }
+        nonmutating set {
+            cyw43_arch_gpio_put(gpio.rawValue, newValue)
+        }
+    }
+}
+
+extension CYW43 {
+
+    enum GPIO: UInt32, CaseIterable {
+
+        case led = 0
+
+        case vsys = 1
+
+        case vbus = 2
     }
 }
 
