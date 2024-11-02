@@ -21,39 +21,41 @@ struct Main {
             print("Wi-Fi init failed.")
             return
         }
-        defer {
-            cyw43.deinit()
-        }
-        let led = UInt32(CYW43_WL_GPIO_LED_PIN)
-        let dot = {
-            cyw43[.led] = true
-            sleep_ms(250)
-            cyw43[.led] = false
-            sleep_ms(250)
-        }
-        let dash = {
-            cyw43[.led] = true
-            sleep_ms(500)
-            cyw43[.led] = false
-            sleep_ms(250)
-        }
+        
         while true {
-            dot()
-            dot()
-            dot()
+            cyw43.dot()
+            cyw43.dot()
+            cyw43.dot()
 
-            dash()
-            dash()
-            dash()
+            cyw43.dash()
+            cyw43.dash()
+            cyw43.dash()
 
-            dot()
-            dot()
-            dot()
+            cyw43.dot()
+            cyw43.dot()
+            cyw43.dot()
         }
     }
 }
 
-struct CYW43 {
+extension CYW43 {
+
+        func dot() {
+            self[.led] = true
+            sleep_ms(250)
+            self[.led] = false
+            sleep_ms(250)
+        }
+
+        func dash() {
+            self[.led] = true
+            sleep_ms(500)
+            self[.led] = false
+            sleep_ms(250)
+        }
+}
+
+struct CYW43: ~Copyable {
 
     /// Initialize the CYW43 architecture. 
     /// 
@@ -65,7 +67,7 @@ struct CYW43 {
         }
     }
 
-    func `deinit`() {
+    deinit {
         cyw43_arch_deinit()
     }
 
@@ -81,7 +83,7 @@ struct CYW43 {
 
 extension CYW43 {
 
-    enum GPIO: UInt32, CaseIterable {
+    enum GPIO: UInt32, CaseIterable, Copyable, Sendable {
 
         case led = 0
 
@@ -91,7 +93,7 @@ extension CYW43 {
     }
 }
 
-enum PicoError: Int32, Error {
+enum PicoError: Int32, Error, Copyable, Sendable {
 
     /// An unspecified error occurred.
     case unknown = -1
