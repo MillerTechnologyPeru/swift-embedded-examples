@@ -1,10 +1,22 @@
+//
+//  LowEnergyAdvertisingData.swift
+//  Bluetooth
+//
+//  Created by Alsey Coleman Miller on 4/26/18.
+//  Copyright © 2018 PureSwift. All rights reserved.
+//
+
 #if canImport(Foundation)
 import Foundation
 #endif
 
 /// Bluetooth Low Energy Advertising Data.
+///
+/// ![Image](https://github.com/PureSwift/Bluetooth/raw/master/Assets/LowEnergyAdvertisingDataExample1.png)
 @frozen
-public struct LowEnergyAdvertisingData: Sendable, Copyable {
+public struct LowEnergyAdvertisingData: Sendable {
+    
+    public typealias Element = UInt8
     
     // MARK: - ByteValue
     
@@ -29,6 +41,7 @@ public struct LowEnergyAdvertisingData: Sendable, Copyable {
     }
     
     public init() {
+        
         self.length = 0
         self.bytes = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     }
@@ -43,12 +56,73 @@ public extension LowEnergyAdvertisingData {
     
     /// Unsafe data access.
     func withUnsafePointer <Result> (_ block: (UnsafePointer<UInt8>) throws -> Result) rethrows -> Result {
-        
         return try Swift.withUnsafePointer(to: bytes) {
             try $0.withMemoryRebound(to: UInt8.self, capacity: LowEnergyAdvertisingData.capacity) {
                 try block($0)
             }
         }
+    }
+}
+
+public extension LowEnergyAdvertisingData {
+    
+    init(_ slice: Slice<LowEnergyAdvertisingData>) {
+        
+        self.init()
+        self.length = UInt8(slice.count)
+        let enumeratedSlice = slice.enumerated()
+        for (offset, element) in enumeratedSlice {
+            self[offset] = element
+        }
+    }
+    
+    init? <C: Collection> (_ collection: C) where C.Element == UInt8 {
+        
+        guard collection.count <= 31
+            else { return nil }
+        
+        self.init()
+        self.length = UInt8(collection.count)
+        collection.enumerated().forEach {
+            self[$0.offset] = $0.element
+        }
+    }
+}
+
+public extension LowEnergyAdvertisingData {
+    
+    mutating func append(_ byte: UInt8) {
+        
+        assert(count < 31)
+        self[count] = byte
+        self.length += 1
+    }
+    
+    static func += (data: inout LowEnergyAdvertisingData, byte: UInt8) {
+        data.append(byte)
+    }
+    
+    mutating func append <C: Collection> (contentsOf bytes: C) where C.Element == UInt8 {
+        
+        assert(count + bytes.count <= LowEnergyAdvertisingData.capacity)
+        for (index, byte) in bytes.enumerated() {
+            self[count + index] = byte
+        }
+        self.length += UInt8(bytes.count)
+    }
+    
+    static func += <C: Collection> (data: inout LowEnergyAdvertisingData, bytes: C) where C.Element == UInt8 {
+        
+        data.append(contentsOf: bytes)
+    }
+    
+    mutating func append(_ pointer: UnsafePointer<UInt8>, count: Int) {
+        
+        assert(self.count + count <= LowEnergyAdvertisingData.capacity)
+        for index in 0 ..< count {
+            self[self.count + index] = pointer.advanced(by: index).pointee
+        }
+        self.length += UInt8(count)
     }
 }
 
@@ -104,6 +178,15 @@ extension LowEnergyAdvertisingData: Hashable {
     }
 }
 
+// MARK: - CustomStringConvertible
+
+extension LowEnergyAdvertisingData: CustomStringConvertible {
+    
+    public var description: String {
+        return toHexadecimal()
+    }
+}
+
 // MARK: - ExpressibleByArrayLiteral
 
 extension LowEnergyAdvertisingData: ExpressibleByArrayLiteral {
@@ -120,9 +203,46 @@ extension LowEnergyAdvertisingData: ExpressibleByArrayLiteral {
     }
 }
 
+// MARK: - Data
+
+#if canImport(Foundation)
+public extension LowEnergyAdvertisingData {
+    
+    /// Initialize from ``Foundation.Data``.
+    init?(data: Data) {
+        self.init(data)
+    }
+    
+    /// Allocate ``Foundation.Data`` from value.
+    var data: Data {
+        var data = Data(capacity: count)
+        data += self
+        return data
+    }
+
+    /// Unsafe data access.
+    func withUnsafeData <Result> (_ block: (Data) throws -> Result) rethrows -> Result {
+        return try withUnsafePointer {
+            try block(Data(bytesNoCopy: UnsafeMutableRawPointer(mutating: $0),
+                               count: count,
+                               deallocator: .none))
+        }
+    }
+}
+#endif
+
+// MARK: - Sequence
+
+extension LowEnergyAdvertisingData: Sequence {
+    
+    public func makeIterator() -> IndexingIterator<LowEnergyAdvertisingData> {
+        return IndexingIterator(_elements: self)
+    }
+}
+
 // MARK: - Collection
 
-extension LowEnergyAdvertisingData {
+extension LowEnergyAdvertisingData: MutableCollection {
     
     public var count: Int {
         return Int(length)
@@ -177,7 +297,12 @@ extension LowEnergyAdvertisingData {
             case 28: return bytes.28
             case 29: return bytes.29
             case 30: return bytes.30
-            default: return 0 //fatalError("Invalid index \(index)")
+            default:
+                #if hasFeature(Embedded)
+                return 0
+                #else
+                fatalError("Invalid index \(index)")
+                #endif
             }
         }
         
@@ -215,8 +340,43 @@ extension LowEnergyAdvertisingData {
             case 28: bytes.28 = newValue
             case 29: bytes.29 = newValue
             case 30: bytes.30 = newValue
-            default: break //fatalError("Invalid index \(index)")
+            default: 
+                #if hasFeature(Embedded)
+                break
+                #else
+                fatalError("Invalid index \(index)")
+                #endif
             }
         }
     }
 }
+
+// MARK: - RandomAccessCollection
+
+extension LowEnergyAdvertisingData: RandomAccessCollection {
+        
+    public subscript(bounds: Range<Int>) -> Slice<LowEnergyAdvertisingData> {
+        return Slice<LowEnergyAdvertisingData>(base: self, bounds: bounds)
+    }
+}
+
+// MARK: - Codable
+
+#if !hasFeature(Embedded)
+extension LowEnergyAdvertisingData: Codable {
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let data = try container.decode(Data.self)
+        guard let value = Self.init(data: data) else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid number of bytes (\(data.count)."))
+        }
+        self = value
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(data)
+    }
+}
+#endif

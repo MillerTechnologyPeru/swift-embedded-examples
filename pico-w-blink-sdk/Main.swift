@@ -14,6 +14,8 @@ struct Main {
 
     static func main() {
 
+        print("Hello World!")
+
         let cyw43: CYW43
         do {
             cyw43 = try CYW43()
@@ -22,6 +24,8 @@ struct Main {
             print("Wi-Fi init failed.")
             return
         }
+
+        cyw43[.led] = false
 
         #if ACCESS_POINT
         let accessPoint: CYW43.AccessPoint
@@ -34,38 +38,63 @@ struct Main {
         }
         #endif
 
-        l2cap_init()
-        gatt_client_init();
+        //let bluetooth = CYW43.Bluetooth()
+        //bluetooth.setPower(.on)
 
-        hci_power_control(HCI_POWER_ON);
+        hci_power_control(HCI_POWER_ON)
 
-        sleep_ms(500)
+        cyw43.blink()
 
-        let advertisement: LowEnergyAdvertisingData = [0x0B, 0x08, 0x42, 0x6C, 0x75, 0x65, 0x5A, 0x20, 0x35, 0x2E, 0x34, 0x33]
-
-        gap_advertisements_set_params(800, 800, 0, 0, nil, 0x07, 0x00);
-        advertisement.withUnsafePointer {
-            gap_advertisements_set_data(advertisement.length, UnsafeMutablePointer<UInt8>(mutating: $0))
+        // wait for Bluetooth to turn on
+        for _ in 1 ... 10 {
+            sleep_ms(1000)
         }
+        
+        var advertisement = LowEnergyAdvertisingData()
+        advertisement.bytes.0 = 0x02
+        advertisement.bytes.1 = 0x01
+        advertisement.bytes.2 = 0x06
+
+        advertisement.bytes.3 = 0x05
+        advertisement.bytes.4 = 0x09
+        advertisement.bytes.5 = 0x50
+        advertisement.bytes.6 = 0x50
+        advertisement.bytes.7 = 0x50
+        advertisement.bytes.8 = 0x50
+
+        advertisement.length = 9
+
+        var data: [UInt8] = [
+            0x02, 0x01, 0x06,
+            0x05, 0x09, 0x50, 0x50, 0x50, 0x50
+        ] 
+
+        var address: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0,0,0,0,0,0)
+        gap_advertisements_set_params(0x0030, 0x0030, 0, 0, &address, 0x07, 0x00);
+        gap_advertisements_set_data(UInt8(data.count), &data)
         gap_advertisements_enable(1);
 
         while true {
-            cyw43.dot()
-            cyw43.dot()
-            cyw43.dot()
-
-            cyw43.dash()
-            cyw43.dash()
-            cyw43.dash()
-
-            cyw43.dot()
-            cyw43.dot()
-            cyw43.dot()
+            cyw43.blink()
         }
     }
 }
 
 extension CYW43 {
+
+        func blink() {
+            dot()
+            dot()
+            dot()
+
+            dash()
+            dash()
+            dash()
+
+            dot()
+            dot()
+            dot()
+        }
 
         func dot() {
             self[.led] = true
@@ -90,9 +119,9 @@ extension CYW43 {
     _ alignment: Int,
     _ size: Int
 ) -> CInt {
-    guard let allocation = malloc(Int(size + alignment - 1)) else { fatalError() }
-    let misalignment = Int(bitPattern: allocation) % alignment
-    precondition(misalignment == 0)
+    guard let allocation = aligned_alloc(alignment, size) else {
+        return 0
+    }
     memptr.pointee = allocation
     return 0
 }
