@@ -25,6 +25,8 @@ struct Main {
             return
         }
 
+        cyw43.dot()
+
         cyw43[.led] = false
 
         #if ACCESS_POINT
@@ -38,16 +40,12 @@ struct Main {
         }
         #endif
 
-        //let bluetooth = CYW43.Bluetooth()
-        //bluetooth.setPower(.on)
-
-        hci_power_control(HCI_POWER_ON)
-
-        cyw43.blink()
+        let bluetooth = CYW43.Bluetooth.shared
+        bluetooth.setPower(.on)
 
         // wait for Bluetooth to turn on
-        for _ in 1 ... 10 {
-            sleep_ms(1000)
+        while bluetooth.state != .on {
+            sleep_ms(500)
         }
         
         var advertisement = LowEnergyAdvertisingData()
@@ -57,21 +55,16 @@ struct Main {
 
         advertisement.bytes.3 = 0x05
         advertisement.bytes.4 = 0x09
-        advertisement.bytes.5 = 0x50
-        advertisement.bytes.6 = 0x50
-        advertisement.bytes.7 = 0x50
-        advertisement.bytes.8 = 0x50
+        advertisement.bytes.5 = "P".utf8.first!
+        advertisement.bytes.6 = "I".utf8.first!
+        advertisement.bytes.7 = "C".utf8.first!
+        advertisement.bytes.8 = "O".utf8.first!
 
         advertisement.length = 9
 
-        var data: [UInt8] = [
-            0x02, 0x01, 0x06,
-            0x05, 0x09, 0x50, 0x50, 0x50, 0x50
-        ] 
-
         var address: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0,0,0,0,0,0)
         gap_advertisements_set_params(0x0030, 0x0030, 0, 0, &address, 0x07, 0x00);
-        gap_advertisements_set_data(UInt8(data.count), &data)
+        bluetooth.advertisement = advertisement
         gap_advertisements_enable(1);
 
         while true {
