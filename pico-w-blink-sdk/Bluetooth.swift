@@ -1,3 +1,14 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the Swift open source project
+//
+// Copyright (c) 2024 Apple Inc. and the Swift project authors.
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+//
+//===----------------------------------------------------------------------===//
+
 extension CYW43 {
 
     final class Bluetooth {
@@ -8,10 +19,13 @@ extension CYW43 {
 
         fileprivate(set) var state: State = .off
 
+        private(set) var address: BluetoothAddress = .zero
+
         var advertisement = LowEnergyAdvertisingData() {
             didSet {
                 let length = advertisement.length
-                self.advertisementBuffer = [UInt8](advertisement)
+                advertisementBuffer = [UInt8](advertisement)
+                // data is not copied, pointer has to stay valid
                 gap_advertisements_set_data(length, &advertisementBuffer)
             }
         }
@@ -20,7 +34,18 @@ extension CYW43 {
 
         var scanResponse = LowEnergyAdvertisingData() {
             didSet {
+                let length = scanResponse.length
+                scanResponseBuffer = [UInt8](scanResponse)
+                // data is not copied, pointer has to stay valid
+                gap_scan_response_set_data(length, &scanResponseBuffer)
+            }
+        }
 
+        private var scanResponseBuffer = [UInt8]()
+
+        var isAdvertising = false {
+            didSet {
+                gap_advertisements_enable(isAdvertising ? 1 : 0)
             }
         }
 
@@ -41,6 +66,20 @@ extension CYW43.Bluetooth {
     func setPower(_ state: PowerState) {
         hci_power_control(.init(rawValue: state.rawValue))
     }
+
+    func setAdvertisementParameters(
+        advIntMin: UInt16 = 0x0030,
+        advIntMax: UInt16 = 0x0030,
+        advType: UInt8 = 0,
+        directAddressType: UInt8 = 0,
+        directAddress: inout BluetoothAddress,
+        channelMap: UInt8 = 0x07,
+        filterPolicy: UInt8 = 0x00
+    ) {
+        withUnsafeMutablePointer(to: &directAddress.bytes) {
+            gap_advertisements_set_params(advIntMin, advIntMax, advType, directAddressType, $0, channelMap, filterPolicy)
+        }
+    }
 }
 
 extension CYW43.Bluetooth {
@@ -60,6 +99,11 @@ extension CYW43.Bluetooth {
         case halting        = 3
         case sleeping       = 4
         case fallingAsleep  = 5
+    }
+
+    struct AdvertisementParameters: Equatable, Hashable {
+
+
     }
 }
 

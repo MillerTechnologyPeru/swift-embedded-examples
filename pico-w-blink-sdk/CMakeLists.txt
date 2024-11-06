@@ -91,6 +91,8 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/GPIO.swift
         ${CMAKE_CURRENT_LIST_DIR}/AccessPoint.swift
         ${CMAKE_CURRENT_LIST_DIR}/Bluetooth.swift
+        ${CMAKE_CURRENT_LIST_DIR}/BluetoothAddress.swift
+        ${CMAKE_CURRENT_LIST_DIR}/ByteSwap.swift
         ${CMAKE_CURRENT_LIST_DIR}/LowEnergyAdvertisingData.swift
         ${CMAKE_CURRENT_LIST_DIR}/Data.swift
         ${CMAKE_CURRENT_LIST_DIR}/String.swift
@@ -109,6 +111,8 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/GPIO.swift
         ${CMAKE_CURRENT_LIST_DIR}/AccessPoint.swift
         ${CMAKE_CURRENT_LIST_DIR}/Bluetooth.swift
+        ${CMAKE_CURRENT_LIST_DIR}/BluetoothAddress.swift
+        ${CMAKE_CURRENT_LIST_DIR}/ByteSwap.swift
         ${CMAKE_CURRENT_LIST_DIR}/LowEnergyAdvertisingData.swift
         ${CMAKE_CURRENT_LIST_DIR}/Data.swift
         ${CMAKE_CURRENT_LIST_DIR}/String.swift

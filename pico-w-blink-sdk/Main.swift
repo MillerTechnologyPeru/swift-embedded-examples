@@ -25,8 +25,6 @@ struct Main {
             return
         }
 
-        cyw43.dot()
-
         cyw43[.led] = false
 
         #if ACCESS_POINT
@@ -48,14 +46,14 @@ struct Main {
             sleep_ms(500)
         }
         
-        let flags: GAPFlags = [.lowEnergyGeneralDiscoverableMode, .notSupportedBREDR]
-        let name: GAPShortLocalName = "Pico"
-        let advertisement: LowEnergyAdvertisingData = GAPDataEncoder.encode(flags, name)
+        var address: BluetoothAddress = .zero
+        bluetooth.setAdvertisementParameters(directAddress: &address)
 
-        var address: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0,0,0,0,0,0)
-        gap_advertisements_set_params(0x0030, 0x0030, 0, 0, &address, 0x07, 0x00)
+        let flags: GAPFlags = [.lowEnergyGeneralDiscoverableMode, .notSupportedBREDR]
+        let name = GAPShortLocalName(name: "Pico " + address.description)
+        let advertisement: LowEnergyAdvertisingData = GAPDataEncoder.encode(flags, name)
         bluetooth.advertisement = advertisement
-        gap_advertisements_enable(1)
+        bluetooth.isAdvertising = true
 
         while true {
             cyw43.blink()
