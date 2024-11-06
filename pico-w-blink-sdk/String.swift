@@ -24,3 +24,4 @@ internal extension String {
         #endif
     }
 }
+

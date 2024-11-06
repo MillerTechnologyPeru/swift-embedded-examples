@@ -138,3 +138,5 @@ extension UnsafeDataConvertible {
 extension UInt16: UnsafeDataConvertible { }
 extension UInt32: UnsafeDataConvertible { }
 extension UInt64: UnsafeDataConvertible { }
+extension UInt128: UnsafeDataConvertible { }
+extension BluetoothAddress: UnsafeDataConvertible { }

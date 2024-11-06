@@ -93,6 +93,7 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/Bluetooth.swift
         ${CMAKE_CURRENT_LIST_DIR}/BluetoothAddress.swift
         ${CMAKE_CURRENT_LIST_DIR}/ByteSwap.swift
+        ${CMAKE_CURRENT_LIST_DIR}/CompanyIdentifier.swift
         ${CMAKE_CURRENT_LIST_DIR}/LowEnergyAdvertisingData.swift
         ${CMAKE_CURRENT_LIST_DIR}/Data.swift
         ${CMAKE_CURRENT_LIST_DIR}/String.swift
@@ -102,6 +103,11 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/GAPDataType.swift
         ${CMAKE_CURRENT_LIST_DIR}/GAPFlags.swift
         ${CMAKE_CURRENT_LIST_DIR}/GAPShortLocalName.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPManufacturerSpecificData.swift
+        ${CMAKE_CURRENT_LIST_DIR}/UInt128.swift
+        ${CMAKE_CURRENT_LIST_DIR}/UUID.swift
+        ${CMAKE_CURRENT_LIST_DIR}/iBeacon.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Integer.swift
         -c -o ${CMAKE_CURRENT_BINARY_DIR}/_swiftcode.o
     DEPENDS
         ${CMAKE_CURRENT_LIST_DIR}/BridgingHeader.h
@@ -113,6 +119,7 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/Bluetooth.swift
         ${CMAKE_CURRENT_LIST_DIR}/BluetoothAddress.swift
         ${CMAKE_CURRENT_LIST_DIR}/ByteSwap.swift
+        ${CMAKE_CURRENT_LIST_DIR}/CompanyIdentifier.swift
         ${CMAKE_CURRENT_LIST_DIR}/LowEnergyAdvertisingData.swift
         ${CMAKE_CURRENT_LIST_DIR}/Data.swift
         ${CMAKE_CURRENT_LIST_DIR}/String.swift
@@ -122,6 +129,11 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/GAPDataType.swift
         ${CMAKE_CURRENT_LIST_DIR}/GAPFlags.swift
         ${CMAKE_CURRENT_LIST_DIR}/GAPShortLocalName.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPManufacturerSpecificData.swift
+        ${CMAKE_CURRENT_LIST_DIR}/UInt128.swift
+        ${CMAKE_CURRENT_LIST_DIR}/UUID.swift
+        ${CMAKE_CURRENT_LIST_DIR}/iBeacon.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Integer.swift
 )
 add_custom_target(swift-blinky-swiftcode DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/_swiftcode.o)
 
