@@ -1,18 +1,15 @@
+//===----------------------------------------------------------------------===//
 //
-//  LowEnergyAdvertisingData.swift
-//  Bluetooth
+// This source file is part of the Swift open source project
 //
-//  Created by Alsey Coleman Miller on 4/26/18.
-//  Copyright © 2018 PureSwift. All rights reserved.
+// Copyright (c) 2024 Apple Inc. and the Swift project authors.
+// Licensed under Apache License v2.0 with Runtime Library Exception
 //
+// See https://swift.org/LICENSE.txt for license information
+//
+//===----------------------------------------------------------------------===//
 
-#if canImport(Foundation)
-import Foundation
-#endif
-
-/// Bluetooth Low Energy Advertising Data.
-///
-/// ![Image](https://github.com/PureSwift/Bluetooth/raw/master/Assets/LowEnergyAdvertisingDataExample1.png)
+/// Bluetooth Low Energy Advertising Data
 @frozen
 public struct LowEnergyAdvertisingData: Sendable {
     
@@ -66,23 +63,15 @@ public extension LowEnergyAdvertisingData {
 
 public extension LowEnergyAdvertisingData {
     
-    init(_ slice: Slice<LowEnergyAdvertisingData>) {
-        
-        self.init()
-        self.length = UInt8(slice.count)
-        let enumeratedSlice = slice.enumerated()
-        for (offset, element) in enumeratedSlice {
-            self[offset] = element
-        }
+    init<Data: DataContainer>(data: Data) {
+        self.init(data)
     }
     
-    init? <C: Collection> (_ collection: C) where C.Element == UInt8 {
-        
-        guard collection.count <= 31
-            else { return nil }
-        
+    init<C: Collection> (_ collection: C) where C.Element == UInt8 {
+        let length = collection.count
+        precondition(length <= 31)
         self.init()
-        self.length = UInt8(collection.count)
+        self.length = UInt8(length)
         collection.enumerated().forEach {
             self[$0.offset] = $0.element
         }
@@ -92,7 +81,6 @@ public extension LowEnergyAdvertisingData {
 public extension LowEnergyAdvertisingData {
     
     mutating func append(_ byte: UInt8) {
-        
         assert(count < 31)
         self[count] = byte
         self.length += 1
@@ -103,7 +91,6 @@ public extension LowEnergyAdvertisingData {
     }
     
     mutating func append <C: Collection> (contentsOf bytes: C) where C.Element == UInt8 {
-        
         assert(count + bytes.count <= LowEnergyAdvertisingData.capacity)
         for (index, byte) in bytes.enumerated() {
             self[count + index] = byte
@@ -112,12 +99,10 @@ public extension LowEnergyAdvertisingData {
     }
     
     static func += <C: Collection> (data: inout LowEnergyAdvertisingData, bytes: C) where C.Element == UInt8 {
-        
         data.append(contentsOf: bytes)
     }
     
     mutating func append(_ pointer: UnsafePointer<UInt8>, count: Int) {
-        
         assert(self.count + count <= LowEnergyAdvertisingData.capacity)
         for index in 0 ..< count {
             self[self.count + index] = pointer.advanced(by: index).pointee
@@ -131,7 +116,6 @@ public extension LowEnergyAdvertisingData {
 extension LowEnergyAdvertisingData: Equatable {
     
     public static func == (lhs: LowEnergyAdvertisingData, rhs: LowEnergyAdvertisingData) -> Bool {
-        
         return lhs.length == rhs.length &&
             lhs.bytes.0 == rhs.bytes.0 &&
             lhs.bytes.1 == rhs.bytes.1 &&
@@ -172,7 +156,6 @@ extension LowEnergyAdvertisingData: Equatable {
 extension LowEnergyAdvertisingData: Hashable {
     
     public func hash(into hasher: inout Hasher) {
-        
         length.hash(into: &hasher)
         withUnsafeBytes(of: bytes) { hasher.combine(bytes: $0) }
     }
@@ -192,14 +175,8 @@ extension LowEnergyAdvertisingData: CustomStringConvertible {
 extension LowEnergyAdvertisingData: ExpressibleByArrayLiteral {
     
     public init(arrayLiteral elements: UInt8...) {
-        
         precondition(elements.count <= 31)
-        
-        self.init()
-        self.length = UInt8(elements.count)
-        elements.enumerated().forEach {
-            self[$0.offset] = $0.element
-        }
+        self.init(elements)
     }
 }
 
@@ -208,18 +185,6 @@ extension LowEnergyAdvertisingData: ExpressibleByArrayLiteral {
 #if canImport(Foundation)
 public extension LowEnergyAdvertisingData {
     
-    /// Initialize from ``Foundation.Data``.
-    init?(data: Data) {
-        self.init(data)
-    }
-    
-    /// Allocate ``Foundation.Data`` from value.
-    var data: Data {
-        var data = Data(capacity: count)
-        data += self
-        return data
-    }
-
     /// Unsafe data access.
     func withUnsafeData <Result> (_ block: (Data) throws -> Result) rethrows -> Result {
         return try withUnsafePointer {
@@ -298,11 +263,7 @@ extension LowEnergyAdvertisingData: MutableCollection {
             case 29: return bytes.29
             case 30: return bytes.30
             default:
-                #if hasFeature(Embedded)
-                return 0
-                #else
-                fatalError("Invalid index \(index)")
-                #endif
+                fatalError("Invalid index")
             }
         }
         
@@ -340,12 +301,8 @@ extension LowEnergyAdvertisingData: MutableCollection {
             case 28: bytes.28 = newValue
             case 29: bytes.29 = newValue
             case 30: bytes.30 = newValue
-            default: 
-                #if hasFeature(Embedded)
-                break
-                #else
-                fatalError("Invalid index \(index)")
-                #endif
+            default:
+                fatalError("Invalid index")
             }
         }
     }
@@ -368,15 +325,15 @@ extension LowEnergyAdvertisingData: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let data = try container.decode(Data.self)
-        guard let value = Self.init(data: data) else {
+        guard data.count <= LowEnergyAdvertisingData.capacity else {
             throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Invalid number of bytes (\(data.count)."))
         }
-        self = value
+        self.init(data: data)
     }
     
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        try container.encode(data)
+        try container.encode(Data(self))
     }
 }
 #endif

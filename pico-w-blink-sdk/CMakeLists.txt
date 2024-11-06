@@ -92,6 +92,14 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/AccessPoint.swift
         ${CMAKE_CURRENT_LIST_DIR}/Bluetooth.swift
         ${CMAKE_CURRENT_LIST_DIR}/LowEnergyAdvertisingData.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Data.swift
+        ${CMAKE_CURRENT_LIST_DIR}/String.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Hexadecimal.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Encoder.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPData.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPDataType.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPFlags.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPShortLocalName.swift
         -c -o ${CMAKE_CURRENT_BINARY_DIR}/_swiftcode.o
     DEPENDS
         ${CMAKE_CURRENT_LIST_DIR}/BridgingHeader.h
@@ -102,6 +110,14 @@ add_custom_command(
         ${CMAKE_CURRENT_LIST_DIR}/AccessPoint.swift
         ${CMAKE_CURRENT_LIST_DIR}/Bluetooth.swift
         ${CMAKE_CURRENT_LIST_DIR}/LowEnergyAdvertisingData.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Data.swift
+        ${CMAKE_CURRENT_LIST_DIR}/String.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Hexadecimal.swift
+        ${CMAKE_CURRENT_LIST_DIR}/Encoder.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPData.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPDataType.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPFlags.swift
+        ${CMAKE_CURRENT_LIST_DIR}/GAPShortLocalName.swift
 )
 add_custom_target(swift-blinky-swiftcode DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/_swiftcode.o)
 

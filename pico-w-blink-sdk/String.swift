@@ -9,23 +9,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-extension CYW43 {
-
-    enum GPIO: UInt32, CaseIterable, Copyable, Sendable {
-
-        case led = 0
-
-        case vsys = 1
-
-        case vbus = 2
-    }
+internal extension String {
     
-    subscript (gpio: GPIO) -> Bool {
-        get {
-            cyw43_arch_gpio_get(gpio.rawValue)
+    /// Initialize from UTF8 data.
+    init?<Data: DataContainer>(utf8 data: Data) {
+        #if hasFeature(Embedded)
+        self.init(validating: data, as: UTF8.self)
+        #else
+        if #available(macOS 15, iOS 18, watchOS 11, tvOS 18, visionOS 2, *) {
+            self.init(validating: data, as: UTF8.self)
+        } else {
+            self.init(bytes: data, encoding: .utf8)
         }
-        nonmutating set {
-            cyw43_arch_gpio_put(gpio.rawValue, newValue)
-        }
+        #endif
     }
 }

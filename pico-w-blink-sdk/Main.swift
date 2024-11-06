@@ -48,24 +48,14 @@ struct Main {
             sleep_ms(500)
         }
         
-        var advertisement = LowEnergyAdvertisingData()
-        advertisement.bytes.0 = 0x02
-        advertisement.bytes.1 = 0x01
-        advertisement.bytes.2 = 0x06
-
-        advertisement.bytes.3 = 0x05
-        advertisement.bytes.4 = 0x09
-        advertisement.bytes.5 = "P".utf8.first!
-        advertisement.bytes.6 = "I".utf8.first!
-        advertisement.bytes.7 = "C".utf8.first!
-        advertisement.bytes.8 = "O".utf8.first!
-
-        advertisement.length = 9
+        let flags: GAPFlags = [.lowEnergyGeneralDiscoverableMode, .notSupportedBREDR]
+        let name: GAPShortLocalName = "Pico"
+        let advertisement: LowEnergyAdvertisingData = GAPDataEncoder.encode(flags, name)
 
         var address: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0,0,0,0,0,0)
-        gap_advertisements_set_params(0x0030, 0x0030, 0, 0, &address, 0x07, 0x00);
+        gap_advertisements_set_params(0x0030, 0x0030, 0, 0, &address, 0x07, 0x00)
         bluetooth.advertisement = advertisement
-        gap_advertisements_enable(1);
+        gap_advertisements_enable(1)
 
         while true {
             cyw43.blink()

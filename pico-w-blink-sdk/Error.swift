@@ -1,5 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the Swift open source project
+//
+// Copyright (c) 2024 Apple Inc. and the Swift project authors.
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+//
+//===----------------------------------------------------------------------===//
+
 /// Raspberry Pi Pico Errors
-enum PicoError: Int32, Error, Copyable, Sendable {
+enum PicoError: Int32, Error, Sendable {
     
     /// An unspecified error occurred.
     case unknown = -1
