@@ -49,19 +49,20 @@ struct Main {
         var address: BluetoothAddress = .zero
         bluetooth.setAdvertisementParameters(directAddress: &address)
 
-        // iBeacon 00001234-0000-1000-8000-00805F9B34FB 
+        // Estimote iBeacon B9407F30-F5F8-466E-AFF9-25556B57FE6D
         // Major 0x01 Minor 0x01
-        let uuid = UUID(bytes: (0x00, 0x00, 0x12, 0x34, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb))
-        let beacon = AppleBeacon(uuid: uuid, major: 0x01, minor: 0x01, rssi: -10)
-        let flags: GAPFlags = [.lowEnergyGeneralDiscoverableMode, .notSupportedBREDR]
-        bluetooth.advertisement = .init(beacon: beacon, flags: flags)
+        if let uuid = UUID(uuidString: "B9407F30-F5F8-466E-AFF9-25556B57FE6D") {
+            let beacon = AppleBeacon(uuid: uuid, major: 0x01, minor: 0x01, rssi: -10)
+            let flags: GAPFlags = [.lowEnergyGeneralDiscoverableMode, .notSupportedBREDR]
+            bluetooth.advertisement = .init(beacon: beacon, flags: flags)
+        }
 
         // scan response with name and bluetooth address
         let name = GAPShortLocalName(name: "Pico " + address.description)
         let scanResponse: LowEnergyAdvertisingData = GAPDataEncoder.encode(name)
         bluetooth.scanResponse = scanResponse
         bluetooth.isAdvertising = true
-        
+
         while true {
             cyw43.blink()
         }
