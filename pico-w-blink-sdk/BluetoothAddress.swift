@@ -127,11 +127,12 @@ extension BluetoothAddress: RawRepresentable {
     /// Convert a Bluetooth Address to its big endian string representation (e.g. `00:1A:7D:DA:71:13`).
     public var rawValue: String {
         let bytes = self.bigEndian.bytes
-        return withUnsafePointer(to: bytes) { bytePointer in
-            bytePointer.withMemoryRebound(to: UInt8.self, capacity: 6) {
-                String(cString: bd_addr_to_str($0))
-            }
-        }
+        return bytes.0.toHexadecimal()
+            + ":" + bytes.1.toHexadecimal()
+            + ":" + bytes.2.toHexadecimal()
+            + ":" + bytes.3.toHexadecimal()
+            + ":" + bytes.4.toHexadecimal()
+            + ":" + bytes.5.toHexadecimal()
     }
 }
 
