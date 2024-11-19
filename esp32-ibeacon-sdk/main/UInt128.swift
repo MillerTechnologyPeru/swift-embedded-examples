@@ -11,7 +11,7 @@
 
 // MARK: - ByteValue
 
-extension UInt128 {
+extension UInt128: ByteValue {
     
     public typealias ByteValue = (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8)
         
@@ -34,15 +34,20 @@ extension UInt128 {
 
 // MARK: - Data Convertible
 
-public extension UInt128 {
-    
-    static var length: Int { return 16 }
-    
-    init?<Data: DataContainer>(data: Data) {
+extension UInt128: DataConvertible {
+        
+    public init?<Data: DataContainer>(data: Data) {
         guard data.count == UInt128.length
             else { return nil }
         self.init(bytes: (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]))
     }
+    
+    public func append<Data: DataContainer>(to data: inout Data) {
+        unsafeAppend(to: &data)
+    }
+    
+    /// Length of value when encoded into data.
+    public var dataLength: Int { Self.length }
 }
 
 // MARK: - UUID
@@ -79,5 +84,30 @@ public extension UUID {
                           bytes.13,
                           bytes.14,
                           bytes.15))
+    }
+}
+
+// MARK: - Backwards compatibility
+
+internal extension UInt128 {
+    
+    var hexadecimal: String {
+        let bytes = self.bigEndian.bytes
+        return bytes.0.toHexadecimal()
+            + bytes.1.toHexadecimal()
+            + bytes.2.toHexadecimal()
+            + bytes.3.toHexadecimal()
+            + bytes.4.toHexadecimal()
+            + bytes.5.toHexadecimal()
+            + bytes.6.toHexadecimal()
+            + bytes.7.toHexadecimal()
+            + bytes.8.toHexadecimal()
+            + bytes.9.toHexadecimal()
+            + bytes.10.toHexadecimal()
+            + bytes.11.toHexadecimal()
+            + bytes.12.toHexadecimal()
+            + bytes.13.toHexadecimal()
+            + bytes.14.toHexadecimal()
+            + bytes.15.toHexadecimal()
     }
 }

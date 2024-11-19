@@ -15,6 +15,7 @@ func app_main() {
 
     var bluetooth: NimBLE
     do {
+        try nvs_flash_init().throwsESPError()
         bluetooth = try NimBLE()
     }
     catch {
@@ -23,6 +24,11 @@ func app_main() {
     }
     
     do {
+        let hostController = bluetooth.hostController
+        while hostController.isEnabled == false {
+            vTaskDelay(500 / (1000 / UInt32(configTICK_RATE_HZ)))
+        }
+
         // read address
         let address = try bluetooth.hostController.address()
         print("Bluetooth address: \(address)")
@@ -41,18 +47,22 @@ func app_main() {
         let name = GAPShortLocalName(name: "ESP32-C6 " + address.description)
         let scanResponse: LowEnergyAdvertisingData = GAPDataEncoder.encode(name)
         try bluetooth.gap.setScanResponse(scanResponse)
-
-        // start advertisement
-        try bluetooth.gap.startAdvertising()
         print("Advertisement name: \(name)")
+
+        let server = bluetooth.server
+        let service = GATTAttribute<[UInt8]>.Service(
+            uuid: .bit16(0x180A),
+            isPrimary: true,
+            characteristics: [
+                
+            ]
+        )
+        try server.add(services: [service])
+        try server.start()
+        server.dump()
+        try bluetooth.gap.startAdvertising()
     }
     catch {
         print("Bluetooth error \(error.rawValue)")
-    }
-
-    let delayMs: UInt32 = 500
-
-    while true {
-        vTaskDelay(delayMs / (1000 / UInt32(configTICK_RATE_HZ)))
     }
 }

@@ -29,3 +29,6 @@
 #ifndef MYNEWT_VAL_BLE_LL_WHITELIST_SIZE
 #define MYNEWT_VAL_BLE_LL_WHITELIST_SIZE CONFIG_BT_NIMBLE_WHITELIST_SIZE
 #endif
+
+// Private functions
+int ble_uuid_length(const ble_uuid_t *uuid);

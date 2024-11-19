@@ -68,12 +68,15 @@ target_sources(${COMPONENT_LIB}
     NimBLE.swift
     Error.swift
     BluetoothAddress.swift
+    BluetoothUUID.swift
+    ByteValue.swift
     ByteSwap.swift
     CompanyIdentifier.swift
     LowEnergyAddressType.swift
     LowEnergyAdvertisingData.swift
     Data.swift
     String.swift
+    System.swift
     Hexadecimal.swift
     Encoder.swift
     GAPData.swift
@@ -85,4 +88,7 @@ target_sources(${COMPONENT_LIB}
     UUID.swift
     iBeacon.swift
     Integer.swift
+    ATTAttributePermissions.swift
+    GATTAttributes.swift
+    GATTCharacteristicProperties.swift
 )
